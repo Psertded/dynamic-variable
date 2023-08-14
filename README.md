@@ -1,6 +1,6 @@
 ## Dynamic Variable Runner - DVR
 
-| English | [中文](README_zh-cn.md) |
+| English |
 
 A simple dynamic variable modifier.  
 Here you can modify variables, create variables, delete variables, swap variables, read variables, etc...
