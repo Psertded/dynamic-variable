@@ -32,5 +32,14 @@
     <ClInclude Include="error.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="cmdlist.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="docmd.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="blacklist.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

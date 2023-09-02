@@ -1,6 +1,7 @@
 #pragma once
 #include <iomanip>
 #include "variable.h"
+#include "blacklist.h"
 
 int __add__(wstring name, _data* data)
 {
@@ -27,7 +28,7 @@ int __add__(wstring name, _data* data)
 	}
 	else if (data->type == L"double")
 	{
-		data->value = new double;
+		data->value = new long double;
 		if (!data->value)
 			return 7;
 		return 0;
@@ -42,6 +43,13 @@ int __add__(wstring name, _data* data)
 	else if (data->type == L"char")
 	{
 		data->value = new wchar_t;
+		if (!data->value)
+			return 7;
+		return 0;
+	}
+	else if (data->type == L"ptr")
+	{
+		data->value = new variable_pointer;
 		if (!data->value)
 			return 7;
 		return 0;
@@ -84,6 +92,13 @@ int add(wstring name, _data data)
 	}
 	else
 	{
+		for (int i = 0; i < 100; i++)
+		{
+			if (name == blacklist[i])
+			{
+				return 16;
+			}
+		}
 		save[name] = dat;
 		return 0;
 	}
@@ -135,7 +150,7 @@ int write(wstring name, _data data, bool dshow = true)
 			}
 			else if (save[name].type == L"double")
 			{
-				*(double*)(save[name].value) = *(double*)(data.value);
+				*(long double*)(save[name].value) = *(long double*)(data.value);
 				if (save[name].value)
 					return 0;
 			}
@@ -151,11 +166,98 @@ int write(wstring name, _data data, bool dshow = true)
 				if (save[name].value)
 					return 0;
 			}
+			else if (save[name].type == L"ptr")
+			{
+				*(variable_pointer*)(save[name].value) = *(variable_pointer*)(data.value);
+				if (save[name].value)
+					return 0;
+			}
 			return 3;
 		}
 		return -1;
 	}
 	return -1;
+}
+int pointer(wstring ptr, wstring source)
+{
+	if (source.find(L"new.") == 0)
+	{
+		int a_result = add(source.substr(4), _data(L"ptr", nullptr));
+		if (a_result)
+		{
+			return a_result;
+		}
+		source = source.substr(4);
+		int w_result = write(ptr, _data(L"ptr", &(source)));
+		if (w_result)
+		{
+			return w_result;
+		}
+	}
+	else if (source.find(L"delete.") == 0)
+	{
+		int d_result = _delete(source.substr(7));
+		if(d_result)
+		{
+			return d_result;
+		}
+		if (save.find(ptr) != save.end())
+		{
+			std::wstring nul = L"NULL";
+			save[ptr] = _data(L"ptr", &nul);
+		}
+	}
+	else if (source.empty())
+	{
+		int a_result = add(ptr, _data(L"ptr", nullptr));
+		if (a_result)
+		{
+			return a_result;
+		}
+	}
+	else
+	{
+		if (save.find(source) == save.end())
+		{
+			return 1;
+		}
+		int w_result = write(ptr, _data(L"ptr", &source));
+		if (w_result)
+		{
+			return w_result;
+		}
+	}
+}
+int free(wstring pointer)
+{
+	if (save.find(pointer) == save.end())
+	{
+		return 1;
+	}
+	else if (save[pointer].type != L"ptr")
+	{
+		return 6;
+	}
+	else
+	{
+		wstring dst = *(wstring*)(save[pointer].value);
+		if (save.find(dst) == save.end())
+		{
+			return 1;
+		}
+		else
+		{
+			int d_result = _delete(dst);
+			if (d_result)
+			{
+				return d_result;
+			}
+			delete save[pointer].value;
+			std::wstring nul = L"NULL";
+			save[pointer] = _data(L"ptr", &nul);
+		}
+	}
+	return 0;
 }
 int read(wstring name,wstring* dst/*empty else your data will go!*/)
 {
@@ -193,7 +295,7 @@ int read(wstring name,wstring* dst/*empty else your data will go!*/)
 		}
 		if (save[name].type == L"double")
 		{
-			*dst = to_wstring(*(double*)(save[name].value));
+			*dst = to_wstring(*(long double*)(save[name].value));
 			if (!dst)
 				return 3;
 		}
@@ -218,6 +320,13 @@ int read(wstring name,wstring* dst/*empty else your data will go!*/)
 			if (!dst)
 				return 3;
 		}
+		if (save[name].type == L"ptr")
+		{
+			dst->clear();
+			dst->append(*((wstring*)save[name].value));
+			if (!dst)
+				return 3;
+		}
 		return 0;
 	}
 	return -1;
@@ -235,3 +344,18 @@ int swap(wstring x, wstring y)
 	return 0;
 }
 
+int copy(wstring source, wstring dest)
+{
+	if (save.find(source) == save.end())
+	{
+		return 1;
+	}
+	if (save.find(dest) == save.end())
+	{
+		add(dest, _data(save[source].type, nullptr));
+	}
+	int w_result = write(dest, _data(save[source].type, save[source].value));
+	if (w_result)
+		return w_result;
+	return 0;
+}

@@ -130,6 +130,9 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="blacklist.h" />
+    <ClInclude Include="cmdlist.h" />
+    <ClInclude Include="docmd.h" />
     <ClInclude Include="error.h" />
     <ClInclude Include="help.h" />
     <ClInclude Include="variable.h" />
